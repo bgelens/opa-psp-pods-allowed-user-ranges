@@ -1,0 +1,87 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2019-06-01",
+      "name": "opa-psp-pods-allowed-user-ranges",
+      "properties": {
+        "policyType": "Custom",
+        "mode": "Microsoft.Kubernetes.Data",
+        "displayName": "Enforce allowed user Id range in AKS",
+        "description": "This policy enforces the allowed user Id range.",
+        "metadata": {
+          "version": "1.0.0",
+          "category": "Kubernetes"
+        },
+        "parameters": {
+          "effect": {
+            "type": "string",
+            "metadata": {
+              "displayName": "Effect",
+              "description": "Enable or disable the execution of the policy"
+            },
+            "allowedValues": [
+              "enforceOPAConstraint",
+              "disabled"
+            ],
+            "defaultValue": "enforceOPAConstraint"
+          },
+          "excludedNamespaces": {
+            "type": "array",
+            "metadata": {
+              "displayName": "Namespace exclusions",
+              "description": "List of Kubernetes namespaces to exclude from policy evaluation. Providing a value for this parameter is optional."
+            },
+            "defaultValue": [
+            ]
+          },
+          "minimumAllowedUserId": {
+            "type": "integer",
+            "metadata": {
+              "displayName": "Minimum User Id in range",
+              "description": "Minimum User Id in range"
+            },
+            "defaultValue": 100
+          },
+          "maximumAllowedUserId": {
+            "type": "integer",
+            "metadata": {
+              "displayName": "Maximum User Id in range",
+              "description": "Maximum User Id in range"
+            },
+            "defaultValue": 300
+          }
+        },
+        "policyRule": {
+          "if": {
+            "field": "type",
+            "in": [
+              "AKS Engine",
+              "Microsoft.Kubernetes/connectedClusters"
+            ]
+          },
+          "then": {
+            "effect": "[[parameters('effect')]",
+            "details": {
+              "constraintTemplate": "https://raw.githubusercontent.com/bgelens/opa-psp-pods-allowed-user-ranges/master/template.yaml",
+              "constraint": "https://raw.githubusercontent.com/bgelens/opa-psp-pods-allowed-user-ranges/master/constraint.yaml",
+              "values": {
+                "excludedNamespaces": "[[parameters('excludedNamespaces')]",
+                "minimumAllowedUserId": "[[parameters('minimumAllowedUserId')]",
+                "maximumAllowedUserId": "[[parameters('maximumAllowedUserId')]"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
